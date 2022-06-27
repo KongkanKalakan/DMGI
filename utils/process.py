@@ -21,9 +21,13 @@ def load_data_dblp(args):
     N = label.shape[0]
 
     truefeatures = data['feature'].astype(float)
-    rownetworks = [data[metapath] + np.eye(N)*sc for metapath in metapaths]
+    # rownetworks = [data[metapath] + np.eye(N)*sc for metapath in metapaths]
+    #
+    # rownetworks = [sp.csr_matrix(rownetwork) for rownetwork in rownetworks]
 
-    rownetworks = [sp.csr_matrix(rownetwork) for rownetwork in rownetworks]
+    rownetworks = [data[metapath] + sp.eye(N)*sc for metapath in metapaths]
+
+    # rownetworks = [sp.csr_matrix(rownetwork) for rownetwork in rownetworks]
 
     truefeatures = sp.lil_matrix(truefeatures)
 

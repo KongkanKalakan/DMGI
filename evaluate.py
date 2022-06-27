@@ -94,7 +94,11 @@ def evaluate(embeds, idx_train, idx_val, idx_test, labels, device, isTest=True):
     test_lbls = np.array(test_lbls.cpu())
 
     run_kmeans(test_embs, test_lbls, nb_classes)
+
+    print(test_embs)
+    print(test_embs.shape)
     run_similarity_search(test_embs, test_lbls)
+    # run_similarity_search_2(test_embs)
 
 def run_similarity_search(test_embs, test_lbls):
     numRows = test_embs.shape[0]
@@ -110,6 +114,14 @@ def run_similarity_search(test_embs, test_lbls):
 
     st = ','.join(st)
     print("\t[Similarity] [5,10,20,50,100] : [{}]".format(st))
+
+
+def run_similarity_search_2(test_embs):
+    numRows = test_embs.shape[0]
+
+    cos_sim_array = pairwise.cosine_similarity(test_embs) - np.eye(numRows)
+    for e in [5665, 8120, 22943, 25270]:
+        print(f"7696, {e}: ", cos_sim_array[7696, e])
 
 
 def run_kmeans(x, y, k):

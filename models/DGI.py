@@ -64,6 +64,7 @@ class DGI(embedder):
 
             # Evaluation
             embeds, _ = model.embed(features, adj, self.args.sparse)
+            print("embeds shape: ", embeds.shape)
             evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.args.device)
             final_embeds.append(embeds)
 

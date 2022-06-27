@@ -145,6 +145,4 @@ class modeler(nn.Module):
             semi = self.logistic(self.H).squeeze(0)
             result['semi'] = semi
 
-
-
         return result

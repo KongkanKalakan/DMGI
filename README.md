@@ -52,3 +52,7 @@ python main.py --embedder DMGI --dataset imdb --metapaths MAM,MDM --isAttn
   year={2020}
 }
 ```
+### Test PJ
+```
+python main.py --embedder DMGI --nb_epochs 10000 --dataset tp1 --metapaths a_m_c,a_m_d --isAttn
+```
