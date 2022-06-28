@@ -64,11 +64,13 @@ class DGI(embedder):
 
             # Evaluation
             embeds, _ = model.embed(features, adj, self.args.sparse)
-            print("embeds shape: ", embeds.shape)
+            # print("embeds shape: ", embeds.shape)
             evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.args.device)
             final_embeds.append(embeds)
 
         embeds = torch.mean(torch.cat(final_embeds), 0).unsqueeze(0)
+        np.save('output/embeds_{}_{}_{}.npy'.format(self.args.dataset, self.args.embedder, self.args.metapaths), embeds)
+
         print("- Integrated")
         evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.args.device)
 

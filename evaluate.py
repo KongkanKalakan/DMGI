@@ -94,9 +94,6 @@ def evaluate(embeds, idx_train, idx_val, idx_test, labels, device, isTest=True):
     test_lbls = np.array(test_lbls.cpu())
 
     run_kmeans(test_embs, test_lbls, nb_classes)
-
-    print(test_embs)
-    print(test_embs.shape)
     run_similarity_search(test_embs, test_lbls)
     # run_similarity_search_2(test_embs)
 
