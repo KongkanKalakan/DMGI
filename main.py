@@ -7,6 +7,7 @@ torch.cuda.manual_seed_all(0)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 import argparse
+import datetime
 
 def parse_args():
     # input arguments
@@ -47,6 +48,9 @@ def printConfig(args):
 def main():
     args, unknown = parse_args()
 
+    start = datetime.datetime.now()
+    print("Start: ", start)
+
     if args.embedder == 'DMGI':
         from models import DMGI
         embedder = DMGI(args)
@@ -55,6 +59,10 @@ def main():
         embedder = DGI(args)
 
     embedder.training()
+
+    end = datetime.datetime.now()
+    print("Done: ", end)
+    print(f"Total: {(end-start).total_seconds()} sec")
 
 if __name__ == '__main__':
     main()

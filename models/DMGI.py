@@ -77,6 +77,9 @@ class DMGI(embedder):
         model.eval()
         evaluate(model.H.data.detach(), self.idx_train, self.idx_val, self.idx_test, self.labels, self.args.device)
 
+        embeds = model.H.data.detach().numpy()
+        np.save('output/embeds_{}_{}_{}.npy'.format(self.args.dataset, self.args.embedder, self.args.metapaths), embeds)
+
 
 class modeler(nn.Module):
     def __init__(self, args):
