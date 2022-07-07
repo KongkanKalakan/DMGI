@@ -6,3 +6,5 @@ saved_model/
 .idea
 data/*.pkl
 data/*.mat
+
+.ipynb_checkpoints

@@ -1,3 +1,9 @@
+### Run (Pls, change config in main.py)
+```
+python main.py
+```
+
+
 # Unsupervised Attributed Multiplex Network Embedding (DMGI)
 
 <p align="center">
@@ -51,8 +57,4 @@ python main.py --embedder DMGI --dataset imdb --metapaths MAM,MDM --isAttn
   booktitle={AAAI},
   year={2020}
 }
-```
-### Test PJ
-```
-python main.py --embedder DMGI --nb_epochs 10000 --dataset tp1 --metapaths a_m_c,a_m_d --isAttn
 ```

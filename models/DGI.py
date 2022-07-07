@@ -12,37 +12,86 @@ np.random.seed(0)
 from evaluate import evaluate
 
 class DGI(embedder):
-    def __init__(self, args):
-        embedder.__init__(self, args)
-        self.args = args
+    def __init__(self,
+                 embedder_name: str,
+                 dataset: str,
+                 metapaths: str,
+                 nb_epochs: int,
+                 hid_units: int,
+                 lr: float,
+                 l2_coef: float,
+                 drop_prob: float,
+                 reg_coef: float,
+                 sup_coef: float,
+                 sc: float,
+                 margin: float,
+                 gpu_num: str,
+                 patience: int,
+                 nheads: int,
+                 activation: str,
+                 isSemi: bool,
+                 isBias: bool,
+                 isAttn: bool,
+                 batch_size: int = 1,
+                 sparse: bool = True):
+        embedder.__init__(self,
+                        embedder_name,
+                        dataset,
+                        metapaths,
+                        nb_epochs,
+                        hid_units,
+                        lr,
+                        l2_coef,
+                        drop_prob,
+                        reg_coef,
+                        sup_coef,
+                        sc,
+                        margin,
+                        gpu_num,
+                        patience,
+                        nheads,
+                        activation,
+                        isSemi,
+                        isBias,
+                        isAttn,
+                        batch_size,
+                        sparse)
 
     def training(self):
-        features_lst = [feature.to(self.args.device) for feature in self.features]
-        adj_lst = [adj_.to(self.args.device) for adj_ in self.adj]
+        features_lst = [feature.to(self.device) for feature in self.features]
+        adj_lst = [adj_.to(self.device) for adj_ in self.adj]
 
         final_embeds = []
         for m_idx, (features, adj) in enumerate(zip(features_lst, adj_lst)):
-            metapath = self.args.metapaths_list[m_idx]
+            metapath = self.metapaths_list[m_idx]
             print("- Training on {}".format(metapath))
-            model = modeler(self.args).to(self.args.device)
 
-            optimiser = torch.optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.l2_coef)
+            model = modeler(hid_units = self.hid_units,
+                            ft_size = self.ft_size,
+                            activation = self.activation,
+                            drop_prob = self.drop_prob,
+                            isBias = self.isBias,
+                            readout_func = self.readout_func,
+                            readout_act_func = self.readout_act_func,
+                            ).to(self.device)
+
+            optimiser = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.l2_coef)
             cnt_wait = 0; best = 1e9
             b_xent = nn.BCEWithLogitsLoss()
-            for epoch in range(self.args.nb_epochs):
+            for epoch in range(self.nb_epochs):
                 model.train()
                 optimiser.zero_grad()
 
-                idx = np.random.permutation(self.args.nb_nodes)
-                shuf_fts = features[:, idx, :].to(self.args.device)
+                idx = np.random.permutation(self.nb_nodes)
+                shuf_fts = features[:, idx, :].to(self.device)
 
-                lbl_1 = torch.ones(self.args.batch_size, self.args.nb_nodes)
-                lbl_2 = torch.zeros(self.args.batch_size, self.args.nb_nodes)
+                lbl_1 = torch.ones(self.batch_size, self.nb_nodes)
+                lbl_2 = torch.zeros(self.batch_size, self.nb_nodes)
                 lbl = torch.cat((lbl_1, lbl_2), 1)
 
-                lbl = lbl.to(self.args.device)
+                lbl = lbl.to(self.device)
 
-                logits = model(features, shuf_fts, adj, self.args.sparse, None, None, None)
+                logits = model(features, shuf_fts, adj, self.sparse, None, None, None)
 
                 loss = b_xent(logits, lbl)
 
@@ -50,45 +99,53 @@ class DGI(embedder):
                 if loss < best:
                     best = loss
                     cnt_wait = 0
-                    torch.save(model.state_dict(), 'saved_model/best_{}_{}_{}.pkl'.format(self.args.dataset, self.args.embedder, metapath))
+                    torch.save(model.state_dict(), 'saved_model/best_{}_{}_{}.pkl'.format(self.dataset, self.embedder_name, metapath))
                 else:
                     cnt_wait += 1
 
-                if cnt_wait == self.args.patience:
+                if cnt_wait == self.patience:
                     break
 
                 loss.backward()
                 optimiser.step()
 
-            model.load_state_dict(torch.load('saved_model/best_{}_{}_{}.pkl'.format(self.args.dataset, self.args.embedder, metapath)))
+            model.load_state_dict(torch.load('saved_model/best_{}_{}_{}.pkl'.format(self.dataset, self.embedder_name, metapath)))
 
             # Evaluation
-            embeds, _ = model.embed(features, adj, self.args.sparse)
+            embeds, _ = model.embed(features, adj, self.sparse)
             # print("embeds shape: ", embeds.shape)
-            evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.args.device)
+            evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.device)
             final_embeds.append(embeds)
 
         embeds = torch.mean(torch.cat(final_embeds), 0).unsqueeze(0)
-        np.save('output/embeds_{}_{}_{}.npy'.format(self.args.dataset, self.args.embedder, self.args.metapaths), embeds)
+        np.save('output/embeds_{}_{}_{}.npy'.format(self.dataset, self.embedder_name, self.metapaths), embeds)
 
         print("- Integrated")
-        evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.args.device)
+        evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.device)
 
 class modeler(nn.Module):
-    def __init__(self, args):
+    def __init__(self,
+                 hid_units,
+                 ft_size,
+                 activation,
+                 drop_prob,
+                 isBias,
+                 readout_func,
+                 readout_act_func
+                 ):
         super(modeler, self).__init__()
-        self.args = args
-        self.gcn = GCN(args.ft_size, args.hid_units, args.activation, args.drop_prob, args.isBias)
+        self.gcn = GCN(ft_size, hid_units, activation, drop_prob, isBias)
 
         # one discriminator
-        self.disc = Discriminator(args.hid_units)
-        self.readout_func = self.args.readout_func
+        self.disc = Discriminator(hid_units)
+        self.readout_func = readout_func
+        self.readout_act_func = readout_act_func
 
     def forward(self, seq1, seq2, adj, sparse, msk, samp_bias1, samp_bias2):
         h_1 = self.gcn(seq1, adj, sparse)
 
         c = self.readout_func(h_1)  # equation 9
-        c = self.args.readout_act_func(c)
+        c = self.readout_act_func(c)
 
         h_2 = self.gcn(seq2, adj, sparse)
 
@@ -101,6 +158,6 @@ class modeler(nn.Module):
         h_1 = self.gcn(seq, adj, sparse)
 
         c = self.readout_func(h_1)  # positive summary vector
-        c = self.args.readout_act_func(c)  # equation 9
+        c = self.readout_act_func(c)  # equation 9
 
         return h_1.detach(), c.detach()

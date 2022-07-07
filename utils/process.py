@@ -8,11 +8,11 @@ import torch.nn as nn
 import scipy.io as sio
 import pdb
 
-def load_data_dblp(args):
-    dataset = args.dataset
-    metapaths = args.metapaths_list
-    sc = args.sc
 
+def load_data_dblp(dataset: str,
+                   metapaths: list,
+                   sc: float
+                   ):
     if dataset == 'acm':
         data = sio.loadmat('data/{}.mat'.format(dataset))
     else:
@@ -25,7 +25,7 @@ def load_data_dblp(args):
     #
     # rownetworks = [sp.csr_matrix(rownetwork) for rownetwork in rownetworks]
 
-    rownetworks = [data[metapath] + sp.eye(N)*sc for metapath in metapaths]
+    rownetworks = [data[metapath] + sp.eye(N) * sc for metapath in metapaths]
 
     # rownetworks = [sp.csr_matrix(rownetwork) for rownetwork in rownetworks]
 
@@ -40,6 +40,7 @@ def load_data_dblp(args):
         truefeatures_list.append(truefeatures)
 
     return rownetworks, truefeatures_list, label, idx_train, idx_val, idx_test
+
 
 def parse_skipgram(fname):
     with open(fname) as f:
@@ -57,6 +58,7 @@ def parse_skipgram(fname):
             it += 1
     return ret
 
+
 # Process a (subset of) a TU dataset into standard form
 def process_tu(data, nb_nodes):
     nb_graphs = len(data)
@@ -67,7 +69,7 @@ def process_tu(data, nb_nodes):
     labels = np.zeros(nb_graphs)
     sizes = np.zeros(nb_graphs, dtype=np.int32)
     masks = np.zeros((nb_graphs, nb_nodes))
-       
+
     for g in range(nb_graphs):
         sizes[g] = data[g].x.shape[0]
         features[g, :sizes[g]] = data[g].x
@@ -79,10 +81,11 @@ def process_tu(data, nb_nodes):
 
     return features, adjacency, labels, sizes, masks
 
+
 def micro_f1(logits, labels):
     # Compute predictions
     preds = torch.round(nn.Sigmoid()(logits))
-    
+
     # Cast to avoid trouble
     preds = preds.long()
     labels = labels.long()
@@ -99,11 +102,13 @@ def micro_f1(logits, labels):
     f1 = (2 * prec * rec) / (prec + rec)
     return f1
 
+
 def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
     correct = preds.eq(labels).double()
     correct = correct.sum()
     return correct / len(labels)
+
 
 """
  Prepare adjacency matrix by expanding up to a given neighbourhood.
@@ -111,6 +116,8 @@ def accuracy(output, labels):
  Finally, the matrix is converted to bias vectors.
  Expected shape: [graph, nodes, nodes]
 """
+
+
 def adj_to_bias(adj, sizes, nhood=1):
     nb_graphs = adj.shape[0]
     mt = np.empty(adj.shape)
@@ -136,13 +143,15 @@ def parse_index_file(filename):
         index.append(int(line.strip()))
     return index
 
+
 def sample_mask(idx, l):
     """Create mask."""
     mask = np.zeros(l)
     mask[idx] = 1
     return np.array(mask, dtype=np.bool)
 
-def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
+
+def load_data(dataset_str):  # {'pubmed', 'citeseer', 'cora'}
     """Load data."""
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
@@ -160,12 +169,12 @@ def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
     if dataset_str == 'citeseer':
         # Fix citeseer dataset (there are some isolated nodes in the graph)
         # Find isolated nodes, add them as zero-vecs into the right position
-        test_idx_range_full = range(min(test_idx_reorder), max(test_idx_reorder)+1)
+        test_idx_range_full = range(min(test_idx_reorder), max(test_idx_reorder) + 1)
         tx_extended = sp.lil_matrix((len(test_idx_range_full), x.shape[1]))
-        tx_extended[test_idx_range-min(test_idx_range), :] = tx
+        tx_extended[test_idx_range - min(test_idx_range), :] = tx
         tx = tx_extended
         ty_extended = np.zeros((len(test_idx_range_full), y.shape[1]))
-        ty_extended[test_idx_range-min(test_idx_range), :] = ty
+        ty_extended[test_idx_range - min(test_idx_range), :] = ty
         ty = ty_extended
 
     features = sp.vstack((allx, tx)).tolil()
@@ -177,13 +186,15 @@ def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
 
     idx_test = test_idx_range.tolist()
     idx_train = range(len(y))
-    idx_val = range(len(y), len(y)+500)
+    idx_val = range(len(y), len(y) + 500)
 
     return adj, features, labels, idx_train, idx_val, idx_test
+
 
 def sparse_to_tuple(sparse_mx, insert_batch=False):
     """Convert sparse matrix to tuple representation."""
     """Set insert_batch=True if you want to insert a batch dimension."""
+
     def to_tuple(mx):
         if not sp.isspmatrix_coo(mx):
             mx = mx.tocoo()
@@ -205,6 +216,7 @@ def sparse_to_tuple(sparse_mx, insert_batch=False):
 
     return sparse_mx
 
+
 def standardize_data(f, train_mask):
     """Standardize feature matrix and convert to tuple representation"""
     # standardize data
@@ -217,6 +229,7 @@ def standardize_data(f, train_mask):
     f = (f - mu) / sigma
     return f
 
+
 def preprocess_features(features):
     """Row-normalize feature matrix and convert to tuple representation"""
     rowsum = np.array(features.sum(1))
@@ -225,6 +238,7 @@ def preprocess_features(features):
     r_mat_inv = sp.diags(r_inv)
     features = r_mat_inv.dot(features)
     return features.todense()
+
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
@@ -241,6 +255,7 @@ def preprocess_adj(adj):
     adj_normalized = normalize_adj(adj + sp.eye(adj.shape[0]))
     return sparse_to_tuple(adj_normalized)
 
+
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
@@ -249,6 +264,7 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
+
 
 def process_adj_gat(adj):
     # adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)

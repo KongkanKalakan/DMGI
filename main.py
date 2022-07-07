@@ -46,17 +46,82 @@ def printConfig(args):
     print(args_vals)
 
 def main():
-    args, unknown = parse_args()
+    # args, unknown = parse_args()
+
+    embedder_name = 'DMGI'
+    dataset = 'tp1'
+    metapaths = 'a_m_c,a_m_d'
+    nb_epochs = 1
+    hid_units = 3
+    lr = 0.0005
+    l2_coef = 0.0001
+    drop_prob = 0.5
+    reg_coef = 0.001
+    sup_coef = 0.1
+    sc = 3.0
+    margin = 0.1
+    gpu_num = 0
+    patience = 20
+    nheads = 1
+    activation = 'relu'
+    isSemi = False
+    isBias = False
+    isAttn = True
+
+    batch_size = 1
+    sparse = True
 
     start = datetime.datetime.now()
     print("Start: ", start)
 
-    if args.embedder == 'DMGI':
+    if embedder_name == 'DMGI':
         from models import DMGI
-        embedder = DMGI(args)
-    elif args.embedder == 'DGI':
+        embedder = DMGI(embedder_name=embedder_name,
+                        dataset=dataset,
+                        metapaths=metapaths,
+                        nb_epochs=nb_epochs,
+                        hid_units=hid_units,
+                        lr=lr,
+                        l2_coef=l2_coef,
+                        drop_prob=drop_prob,
+                        reg_coef=reg_coef,
+                        sup_coef=sup_coef,
+                        sc=sc,
+                        margin=margin,
+                        gpu_num=gpu_num,
+                        patience=patience,
+                        nheads=nheads,
+                        activation=activation,
+                        isSemi=isSemi,
+                        isBias=isBias,
+                        isAttn=isAttn,
+                        batch_size=batch_size,
+                        sparse=sparse
+                        )
+    elif embedder_name == 'DGI':
         from models import DGI
-        embedder = DGI(args)
+        embedder = DGI(embedder_name=embedder_name,
+                        dataset=dataset,
+                        metapaths=metapaths,
+                        nb_epochs=nb_epochs,
+                        hid_units=hid_units,
+                        lr=lr,
+                        l2_coef=l2_coef,
+                        drop_prob=drop_prob,
+                        reg_coef=reg_coef,
+                        sup_coef=sup_coef,
+                        sc=sc,
+                        margin=margin,
+                        gpu_num=gpu_num,
+                        patience=patience,
+                        nheads=nheads,
+                        activation=activation,
+                        isSemi=isSemi,
+                        isBias=isBias,
+                        isAttn=isAttn,
+                        batch_size=batch_size,
+                        sparse=sparse
+                        )
 
     embedder.training()
 
