@@ -11,6 +11,8 @@ import numpy as np
 np.random.seed(0)
 from evaluate import evaluate
 
+import pandas as pd
+
 class DGI(embedder):
     def __init__(self,
                  embedder_name: str,
@@ -118,10 +120,14 @@ class DGI(embedder):
             final_embeds.append(embeds)
 
         embeds = torch.mean(torch.cat(final_embeds), 0).unsqueeze(0)
-        np.save('output/embeds_{}_{}_{}.npy'.format(self.dataset, self.embedder_name, self.metapaths), embeds)
-
         print("- Integrated")
         evaluate(embeds, self.idx_train, self.idx_val, self.idx_test, self.labels, self.device)
+
+        embeds = embeds.cpu().numpy().squeeze()
+        np.save('output/embeds_{}_{}_{}.npy'.format(self.dataset, self.embedder_name, self.metapaths), embeds)
+
+        df_embeds = pd.DataFrame(embeds)
+        df_embeds.to_csv('output/embeds_{}_{}_{}.csv'.format(self.dataset, self.embedder_name, self.metapaths), index=False)
 
 class modeler(nn.Module):
     def __init__(self,
