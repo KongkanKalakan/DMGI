@@ -12,6 +12,8 @@ from evaluate import evaluate
 from models import LogReg
 import pickle as pkl
 
+import pandas as pd
+
 class DMGI(embedder):
     def __init__(self,
                  embedder_name: str,
@@ -137,8 +139,11 @@ class DMGI(embedder):
         model.eval()
         evaluate(model.H.data.detach(), self.idx_train, self.idx_val, self.idx_test, self.labels, self.device)
 
-        embeds = model.H.data.detach().numpy()
+        embeds = model.H.data.detach().cpu().numpy().squeeze()
         np.save('output/embeds_{}_{}_{}.npy'.format(self.dataset, self.embedder_name, self.metapaths), embeds)
+
+        df_embeds = pd.DataFrame(embeds)
+        df_embeds.to_csv('output/embeds_{}_{}_{}.csv'.format(self.dataset, self.embedder_name, self.metapaths), index=False)
 
 
 class modeler(nn.Module):

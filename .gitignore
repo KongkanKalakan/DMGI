@@ -1,5 +1,5 @@
-result/
-saved_model/
+#output/
+#saved_model/
 **/__pycache__/
 *.sh
 
