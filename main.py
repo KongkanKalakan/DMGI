@@ -48,10 +48,10 @@ def printConfig(args):
 def main():
     # args, unknown = parse_args()
 
-    embedder_name = 'DMGI'
+    embedder_name = 'DGI'
     dataset = 'tp1'
     metapaths = 'a_m_c,a_m_d'
-    nb_epochs = 1
+    nb_epochs = 5
     hid_units = 3
     lr = 0.0005
     l2_coef = 0.0001

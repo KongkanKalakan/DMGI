@@ -12,6 +12,7 @@ np.random.seed(0)
 from evaluate import evaluate
 
 import pandas as pd
+from utils.visualization import draw_loss
 
 class DGI(embedder):
     def __init__(self,
@@ -80,6 +81,9 @@ class DGI(embedder):
             optimiser = torch.optim.Adam(model.parameters(), lr=self.lr, weight_decay=self.l2_coef)
             cnt_wait = 0; best = 1e9
             b_xent = nn.BCEWithLogitsLoss()
+
+            loss_values = []
+
             for epoch in range(self.nb_epochs):
                 model.train()
                 optimiser.zero_grad()
@@ -108,8 +112,13 @@ class DGI(embedder):
                 if cnt_wait == self.patience:
                     break
 
+                loss_values.append(loss.detach().cpu().numpy())
+
                 loss.backward()
                 optimiser.step()
+
+            loss_values = np.array(loss_values).tolist()
+            draw_loss(loss_values, save_filename='output/losses_{}_{}_{}.jpg'.format(self.dataset, self.embedder_name, metapath))
 
             model.load_state_dict(torch.load('saved_model/best_{}_{}_{}.pkl'.format(self.dataset, self.embedder_name, metapath)))
 

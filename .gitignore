@@ -1,5 +1,10 @@
-#output/
-#saved_model/
+output/*.csv
+output/*.npy
+output/*.jpg
+output/*.png
+
+saved_model/*.pkl
+
 **/__pycache__/
 *.sh
 

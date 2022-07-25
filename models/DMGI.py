@@ -13,6 +13,7 @@ from models import LogReg
 import pickle as pkl
 
 import pandas as pd
+from utils.visualization import draw_loss
 
 class DMGI(embedder):
     def __init__(self,
@@ -87,6 +88,8 @@ class DMGI(embedder):
         b_xent = nn.BCEWithLogitsLoss()
         xent = nn.CrossEntropyLoss()
 
+        loss_values = []
+
         for epoch in range(self.nb_epochs):
             xent_loss = None
             model.train()
@@ -129,9 +132,13 @@ class DMGI(embedder):
             if cnt_wait == self.patience:
                 break
 
+            loss_values.append(loss.detach().cpu().numpy())
+
             loss.backward()
             optimiser.step()
 
+        loss_values = np.array(loss_values).tolist()
+        draw_loss(loss_values, save_filename='output/losses_{}_{}_{}.jpg'.format(self.dataset, self.embedder_name, self.metapaths))
 
         model.load_state_dict(torch.load('saved_model/best_{}_{}_{}.pkl'.format(self.dataset, self.embedder_name, self.metapaths)))
 
